@@ -1,0 +1,28 @@
+{
+  "name": "inkling",
+  "version": "1.0.0",
+  "description": "Inkling — an emotionally-aware agentic writing companion. Helps you turn real moments (yours or someone else's) into stories, blog posts, and reflective writing.",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "netlify:dev": "netlify dev"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.8.2",
+    "@types/node": "^20.14.0"
+  }
+}
