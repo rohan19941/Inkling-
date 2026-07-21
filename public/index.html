@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Inkling — a writing companion that listens first</title>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card">
+      <div class="mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4c5 6.5 8 10.9 8 14.5A8 8 0 1 1 8 18.5C8 14.9 11 10.5 16 4Z" fill="#7fc8f5"/>
+          <circle cx="16" cy="19" r="2.4" fill="#0c0d0f"/>
+        </svg>
+      </div>
+
+      <h1>Inkling</h1>
+      <p class="tagline">A writing companion that asks before it writes.<br />Bring it a real moment — yours, or someone else's — and shape it into a story, a post, or something worth keeping.</p>
+
+      <div id="config-flag" class="login-flag"></div>
+
+      <div class="login-actions">
+        <button id="google-btn" class="btn btn-google">
+          <svg width="17" height="17" viewBox="0 0 18 18" aria-hidden="true">
+            <path fill="#04141f" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62Z"/>
+            <path fill="#04141f" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.85.86-3.05.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18Z"/>
+            <path fill="#04141f" d="M3.97 10.71a5.4 5.4 0 0 1 0-3.42V4.96H.96a9 9 0 0 0 0 8.08l3.01-2.33Z"/>
+            <path fill="#04141f" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58Z"/>
+          </svg>
+          Continue with Google
+        </button>
+        <button id="guest-btn" class="btn btn-guest">Continue as guest</button>
+      </div>
+
+      <p class="login-note">Guest entries are saved to this browser's session so you can try Inkling before connecting an account. No writing is used to train anything.</p>
+    </div>
+  </div>
+
+  <script src="js/login.js"></script>
+</body>
+</html>
