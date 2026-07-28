@@ -50,23 +50,51 @@
     <div class="conversation" id="conversation">
       <div class="empty-state" id="empty-state">
         <h2>What happened?</h2>
-        <p>Tell Inkling about a moment — something that happened to you, or to someone you know. Say more than you think you need to; the details are what make it worth writing.</p>
+        <p>Tell Safayer about a moment — something that happened to you, or to someone you know. Say more than you think you need to; the details are what make it worth writing.</p>
       </div>
       <div class="conversation-inner" id="conversation-inner"></div>
     </div>
 
     <div class="composer">
       <div class="composer-inner">
-        <textarea id="composer-input" rows="1" placeholder="Tell Inkling what happened…"></textarea>
+        <textarea id="composer-input" rows="1" placeholder="Tell Safayer what happened…"></textarea>
         <button class="send-btn" id="send-btn" aria-label="Send">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M13 6l6 6-6 6"/>
           </svg>
         </button>
       </div>
-      <p class="composer-hint">Inkling asks questions before it drafts — the first reply is often a question back to you.</p>
+      <p class="composer-hint">Safayer asks questions before it drafts — the first reply is often a question back to you.</p>
     </div>
   </main>
+</div>
+
+<!-- Research modal -->
+<div class="overlay" id="research-overlay"></div>
+<div class="research-modal" id="research-modal" aria-label="Research your topic">
+  <div class="research-step" id="research-step-topic">
+    <h2>What are you writing about?</h2>
+    <p class="research-sub">Give it a topic and it'll research it for real, then suggest a few angles to start from.</p>
+    <textarea id="research-topic-input" rows="3" placeholder="e.g. the last video rental store in my town closing down"></textarea>
+    <div class="research-actions">
+      <button class="btn btn-ghost" id="research-skip-btn">Skip, just start writing</button>
+      <button class="btn btn-primary" id="research-go-btn">Research this</button>
+    </div>
+  </div>
+
+  <div class="research-step" id="research-step-loading" style="display:none;">
+    <div class="research-loading">
+      <span class="pulse-dot"></span>
+      <span id="research-loading-text">researching…</span>
+    </div>
+  </div>
+
+  <div class="research-step" id="research-step-options" style="display:none;">
+    <h2>A few angles</h2>
+    <p class="research-sub">Pick one to start from — you can steer it differently once you're writing.</p>
+    <div class="research-options" id="research-options"></div>
+    <button class="btn btn-text" id="research-back-btn">← Try a different topic</button>
+  </div>
 </div>
 
 <!-- Settings panel -->
