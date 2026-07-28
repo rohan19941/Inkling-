@@ -129,3 +129,89 @@ export async function generateReply({ persona, writingGoal, creativity, messages
 export function listPersonas() {
   return Object.entries(PERSONAS).map(([id, p]) => ({ id, label: p.label }));
 }
+
+/**
+ * Researches a topic using web search, then proposes 3 distinct angles a
+ * writer could take on it, each grounded in something actually found.
+ * @param {string} topic
+ * @returns {Promise<Array<{title: string, angle: string, facts: string[]}>>}
+ */
+export async function researchTopic(topic) {
+  const apiKey = Netlify.env.get("ANTHROPIC_API_KEY");
+  if (!apiKey) {
+    throw Object.assign(new Error("ANTHROPIC_API_KEY is not set on the site."), { code: "NO_API_KEY" });
+  }
+
+  const model = Netlify.env.get("CLAUDE_MODEL") || "claude-sonnet-5";
+
+  const system = `You help a writer research a topic before they start a piece of
+personal or narrative writing. You have web search available — use it to find
+real, current, specific information about the topic (facts, context, notable
+details, recent developments).
+
+Then propose exactly 3 distinct angles the writer could take — different ways
+to frame or approach the piece, each grounded in something you actually found.
+Angles should be genuinely different from each other (for example: one narrow
+and personal, one wider in context, one built around a surprising detail) —
+not three versions of the same idea.
+
+Respond with ONLY valid JSON, no markdown fences, no commentary, matching
+exactly this shape:
+
+{"options": [
+  {"title": "short 3-6 word label", "angle": "1-2 sentence description of this angle", "facts": ["a specific, concrete fact or detail found while researching", "another one"]}
+]}
+
+Always return exactly 3 options. Keep facts genuinely factual — never invent
+one. Paraphrase everything in your own words; never quote a source directly.`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1500,
+      system,
+      messages: [{ role: "user", content: `Topic: ${topic}` }],
+      tools: [{ type: "web_search_20250305", name: "web_search" }],
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw Object.assign(new Error(`Anthropic API error (${response.status}): ${detail}`), { code: "API_ERROR" });
+  }
+
+  const data = await response.json();
+  const text = (data.content || [])
+    .filter((block) => block.type === "text")
+    .map((block) => block.text)
+    .join("\n")
+    .trim();
+
+  const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        parsed = JSON.parse(match[0]);
+      } catch {
+        // fall through to the error below
+      }
+    }
+  }
+
+  if (!parsed || !parsed.options || !Array.isArray(parsed.options)) {
+    throw Object.assign(new Error("Couldn't parse research options."), { code: "PARSE_ERROR" });
+  }
+
+  return parsed.options.slice(0, 3);
+}
