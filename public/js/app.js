@@ -283,6 +283,119 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
+/* ---------- research ---------- */
+
+function openResearchModal() {
+  el("research-topic-input").value = "";
+  showResearchStep("topic");
+  el("research-overlay").classList.add("show");
+  el("research-modal").classList.add("show");
+}
+
+function closeResearchModal() {
+  el("research-overlay").classList.remove("show");
+  el("research-modal").classList.remove("show");
+}
+
+function showResearchStep(step) {
+  ["topic", "loading", "options"].forEach((s) => {
+    el(`research-step-${s}`).style.display = s === step ? "block" : "none";
+  });
+}
+
+async function runResearch() {
+  const topic = el("research-topic-input").value.trim();
+  if (!topic) return;
+  showResearchStep("loading");
+
+  const loadingText = el("research-loading-text");
+  const stages = ["researching…", "reading around…", "shaping angles…"];
+  let i = 0;
+  const timer = setInterval(() => {
+    i = (i + 1) % stages.length;
+    loadingText.textContent = stages[i];
+  }, 1100);
+
+  try {
+    let options;
+    if (state.preview) {
+      await wait(1800);
+      options = [
+        {
+          title: "The detail nobody noticed",
+          angle: "Focus on one small, overlooked detail and build the piece outward from it.",
+          facts: ["Preview mode — connect the backend for real research."],
+        },
+        {
+          title: "A wider lens",
+          angle: "Place this topic in a larger context — what does it represent beyond itself?",
+          facts: ["Preview mode — no live research performed."],
+        },
+        {
+          title: "A personal thread",
+          angle: "Anchor the piece in a specific, personal moment connected to this topic.",
+          facts: ["Preview mode — no live research performed."],
+        },
+      ];
+    } else {
+      const res = await api("/api/chat/research", { method: "POST", body: JSON.stringify({ topic }) });
+      options = res.options;
+    }
+    clearInterval(timer);
+    renderResearchOptions(topic, options);
+    showResearchStep("options");
+  } catch (err) {
+    clearInterval(timer);
+    console.error(err);
+    showResearchStep("topic");
+    alert(err.message || "Couldn't research that topic just now — try again, or skip and start writing directly.");
+  }
+}
+
+function renderResearchOptions(topic, options) {
+  const wrap = el("research-options");
+  wrap.innerHTML = "";
+  (options || []).forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.className = "persona-card";
+    btn.innerHTML = `<div class="p-name"></div><div class="p-desc"></div>`;
+    btn.querySelector(".p-name").textContent = opt.title || "Untitled angle";
+    btn.querySelector(".p-desc").textContent = opt.angle || "";
+    btn.addEventListener("click", () => startEntryFromResearch(topic, opt));
+    wrap.appendChild(btn);
+  });
+}
+
+async function startEntryFromResearch(topic, option) {
+  closeResearchModal();
+  const factsList = (option.facts || []).map((f) => `- ${f}`).join("\n");
+  const seedText = `Topic: ${topic}\n\nAngle: ${option.angle}${
+    factsList ? `\n\nWhat I found:\n${factsList}` : ""
+  }\n\nLet's start from here — tell me what actually happened, in your own words.`;
+
+  if (state.preview) {
+    state.activeThreadId = "preview";
+    state.activeMessages = [{ role: "assistant", content: seedText }];
+    state.previewTurn = 0;
+    state.threads.unshift({ id: "preview", title: topic.slice(0, 48), updatedAt: new Date().toISOString(), preview: "" });
+    renderThreadList();
+    renderMessages();
+    threadTitleLabel.textContent = topic.slice(0, 48);
+    return;
+  }
+
+  try {
+    const { thread } = await api("/api/chat/threads", {
+      method: "POST",
+      body: JSON.stringify({ title: topic, seedMessage: seedText }),
+    });
+    state.threads.unshift({ id: thread.id, title: thread.title, updatedAt: thread.updatedAt, preview: "" });
+    openThread(thread.id);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 /* ---------- settings panel ---------- */
 
 function buildPersonaGrid() {
@@ -334,7 +447,7 @@ function closeSettings() {
 
 function exportEntry() {
   const title = state.threads.find((t) => t.id === state.activeThreadId)?.title || "inkling-entry";
-  const text = state.activeMessages.map((m) => `${m.role === "user" ? "You" : "Inkling"}: ${m.content}`).join("\n\n");
+  const text = state.activeMessages.map((m) => `${m.role === "user" ? "You" : "Safayer"}: ${m.content}`).join("\n\n");
   const blob = new Blob([text], { type: "text/plain" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -380,7 +493,14 @@ async function logout() {
 /* ---------- wiring ---------- */
 
 function wireEvents() {
-  el("new-entry-btn").addEventListener("click", newEntry);
+  el("new-entry-btn").addEventListener("click", openResearchModal);
+  el("research-go-btn").addEventListener("click", runResearch);
+  el("research-skip-btn").addEventListener("click", () => {
+    closeResearchModal();
+    newEntry();
+  });
+  el("research-back-btn").addEventListener("click", () => showResearchStep("topic"));
+  el("research-overlay").addEventListener("click", closeResearchModal);
   sendBtn.addEventListener("click", sendMessage);
   composerInput.addEventListener("input", autoGrow);
   composerInput.addEventListener("keydown", (e) => {
@@ -404,3 +524,4 @@ function wireEvents() {
 }
 
 init();
+
