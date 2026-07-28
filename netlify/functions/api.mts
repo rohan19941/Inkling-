@@ -1,7 +1,7 @@
 import type { Context, Config } from "@netlify/functions";
 import { getUserIdFromRequest } from "./lib/session.mts";
 import { store } from "./lib/store.mts";
-import { generateReply, listPersonas } from "./lib/aiAgent.mts";
+import { generateReply, listPersonas, researchTopic } from "./lib/aiAgent.mts";
 
 function json(data: unknown, init: { status?: number } = {}) {
   return new Response(JSON.stringify(data), {
@@ -34,6 +34,27 @@ export default async (req: Request, _context: Context) => {
     }
   }
 
+  // ---- POST /api/chat/research ----
+  if (segments[1] === "chat" && segments[2] === "research" && req.method === "POST") {
+    const body = await req.json().catch(() => ({}));
+    const topic = (body.topic || "").trim();
+    if (!topic) return json({ error: "Topic can't be empty." }, { status: 400 });
+
+    try {
+      const options = await researchTopic(topic);
+      return json({ options });
+    } catch (err: any) {
+      if (err.code === "NO_API_KEY") {
+        return json(
+          { error: "This site doesn't have an Anthropic API key configured yet." },
+          { status: 503 }
+        );
+      }
+      console.error(err);
+      return json({ error: "Couldn't research that topic just now. Try again in a moment." }, { status: 502 });
+    }
+  }
+
   // ---- /api/chat/threads ----
   if (segments[1] === "chat" && segments[2] === "threads") {
     const threadId = segments[3];
@@ -49,6 +70,11 @@ export default async (req: Request, _context: Context) => {
     if (!threadId && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       const thread = await store.createThread(uid, body.title);
+      if (body.seedMessage) {
+        const seed = { role: "assistant", content: body.seedMessage, at: new Date().toISOString() };
+        const updated = await store.addMessage(uid, thread.id, seed);
+        return json({ thread: updated });
+      }
       return json({ thread });
     }
 
@@ -110,4 +136,4 @@ export default async (req: Request, _context: Context) => {
 
 export const config: Config = {
   path: "/api/*",
-};
+};    
